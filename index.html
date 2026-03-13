@@ -1,71 +1,100 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Star Map Generator</title>
+<title>Star Map Generator</title>
+<style>
+body{
+  font-family: Arial;
+  text-align:center;
+  margin-top:40px;
+}
+input,button{
+  padding:10px;
+  margin:8px;
+}
+img{
+  margin-top:20px;
+  max-width:600px;
+}
+</style>
 </head>
+
 <body>
 
 <h2>Create Your Star Map</h2>
 
-<label>Place:</label>
-<input type="text" id="place" placeholder="Kathmandu"><br><br>
+<input type="text" id="location" placeholder="Enter location (e.g. Kathmandu)">
+<br>
 
-<label>Latitude:</label>
-<input type="text" id="lat" placeholder="27.7172"><br><br>
+<input type="date" id="date">
+<br>
 
-<label>Longitude:</label>
-<input type="text" id="lng" placeholder="85.3240"><br><br>
-
-<label>Date:</label>
-<input type="date" id="date"><br><br>
-
-<label>Time:</label>
-<input type="time" id="time"><br><br>
-
-<button onclick="generateStarMap()">Generate</button>
-<button onclick="downloadImage()">Download</button>
+<button onclick="generateMap()">Generate Star Map</button>
+<button onclick="downloadMap()">Download</button>
 
 <br><br>
 
-<img id="starmap" width="500">
+<img id="starmap"/>
 
 <script>
 
 let imageUrl = "";
 
-function generateStarMap(){
+async function generateMap(){
 
-const lat = document.getElementById("lat").value;
-const lng = document.getElementById("lng").value;
-const date = document.getElementById("date").value;
-const time = document.getElementById("time").value;
+  const location = document.getElementById("location").value;
+  const date = document.getElementById("date").value;
 
-imageUrl = `/api/starmap.svg?api_key=YOUR_API_KEY
-&latitude=${lat}
-&longitude=${lng}
-&date=${date}
-&time=${time}
-&background_color=000000
-&main_color=FFFFFF
-&show_milky_way=true
-&show_constellations=true`;
+  if(!location || !date){
+    alert("Please enter location and date");
+    return;
+  }
 
-imageUrl = imageUrl.replace(/\s/g,'');
+  /* Convert location → latitude & longitude */
+  const geo = await fetch(
+    `https://nominatim.openstreetmap.org/search?q=${location}&format=json&limit=1`
+  );
 
-document.getElementById("starmap").src = imageUrl;
+  const geoData = await geo.json();
 
+  if(!geoData.length){
+    alert("Location not found");
+    return;
+  }
+
+  const lat = geoData[0].lat;
+  const lon = geoData[0].lon;
+
+  const time = "21:00:00";
+
+  imageUrl = `/api/starmap.svg?api_key=YOUR_API_KEY
+  &latitude=${lat}
+  &longitude=${lon}
+  &date=${date}
+  &time=${time}
+  &background_color=000000
+  &main_color=FFFFFF
+  &show_milky_way=true
+  &show_constellations=true`.replace(/\s/g,'');
+
+  document.getElementById("starmap").src = imageUrl;
 }
 
-function downloadImage(){
+function downloadMap(){
+  if(!imageUrl){
+    alert("Generate map first");
+    return;
+  }
 
-const link = document.createElement("a");
-link.href = imageUrl;
-link.download = "starmap.svg";
-link.click();
-
+  const link = document.createElement("a");
+  link.href = imageUrl;
+  link.download = "starmap.svg";
+  link.click();
 }
 
 </script>
 
 </body>
 </html>
+```
